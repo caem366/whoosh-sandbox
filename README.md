@@ -10,6 +10,8 @@ The current prototype uses simulated CAD balances only and does not connect to r
 
 The developer sandbox lets you simulate a group purchase and inspect the full flow:
 
+![WHOOSH developer sandbox showing a simulated group purchase, API inspector, balances, and settlement queue](docs/images/whoosh-sandbox.png)
+
 - choose a merchant
 - enter a transaction amount
 - select participating members
