@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import {
   createSandboxTransaction,
+  createSandboxSession,
   getGroup,
   isWhooshApiError,
   processSettlement,
@@ -13,7 +14,7 @@ import {
   type SettlementSimulation,
 } from '../api/whoosh'
 
-const DEMO_GROUP_ID = '14441b04-1d75-4c9f-bbb3-9e392d587633'
+const SANDBOX_GROUP_STORAGE_KEY = 'whoosh-sandbox-group-id'
 
 function formatCents(amountCents: number, currency = 'CAD'): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency }).format(amountCents / 100)
@@ -50,6 +51,7 @@ function formatEventTime(value: string): string {
 }
 
 export function GroupPage() {
+  const [groupId, setGroupId] = useState<string | null>(null)
   const [data, setData] = useState<GroupDetail | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [merchant, setMerchant] = useState('Uber Eats')
@@ -63,9 +65,26 @@ export function GroupPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionStatus, setActionStatus] = useState<number | null>(null)
 
+  async function createFreshSandbox() {
+    const session = await createSandboxSession()
+    localStorage.setItem(SANDBOX_GROUP_STORAGE_KEY, session.groupId)
+    setGroupId(session.groupId)
+    const group = await getGroup(session.groupId)
+    setData(group)
+    setPayerMemberId(group.members[0]?.memberId ?? '')
+    setParticipantMemberIds(group.members.map((member) => member.memberId))
+    setRequestPayload(null)
+    setResponsePayload(null)
+    setResult(null)
+    setActionError(null)
+    setActionStatus(null)
+    setLoadError(null)
+  }
+
   async function refreshGroup() {
+    if (!groupId) return
     try {
-      const group = await getGroup(DEMO_GROUP_ID)
+      const group = await getGroup(groupId)
       setData(group)
       setLoadError(null)
       setPayerMemberId((current) => current || group.members[0]?.memberId || '')
@@ -78,16 +97,22 @@ export function GroupPage() {
   useEffect(() => {
     let cancelled = false
 
-    void getGroup(DEMO_GROUP_ID)
-      .then((group) => {
-        if (cancelled) return
-        setData(group)
-        setPayerMemberId(group.members[0]?.memberId ?? '')
-        setParticipantMemberIds(group.members.map((member) => member.memberId))
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Could not load WHOOSH group')
-      })
+    const savedGroupId = localStorage.getItem(SANDBOX_GROUP_STORAGE_KEY)
+    const load = savedGroupId ? getGroup(savedGroupId) : createSandboxSession().then(async (session) => {
+      localStorage.setItem(SANDBOX_GROUP_STORAGE_KEY, session.groupId)
+      setGroupId(session.groupId)
+      return getGroup(session.groupId)
+    })
+
+    void load.then((group) => {
+      if (cancelled) return
+      setData(group)
+      setGroupId(group.group.id)
+      setPayerMemberId(group.members[0]?.memberId ?? '')
+      setParticipantMemberIds(group.members.map((member) => member.memberId))
+    }).catch((error: unknown) => {
+      if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Could not load WHOOSH sandbox')
+    })
 
     return () => { cancelled = true }
   }, [])
@@ -192,7 +217,10 @@ export function GroupPage() {
           <h1>{data.group.name}</h1>
           <p className="muted">Simulated CAD only · no real payment rails</p>
         </div>
-        <button className="button button-secondary" type="button" onClick={() => void refreshGroup()}>Refresh state</button>
+        <div className="header-actions">
+          <button className="button button-ghost" type="button" onClick={() => void createFreshSandbox()}>Reset sandbox</button>
+          <button className="button button-secondary" type="button" onClick={() => void refreshGroup()}>Refresh state</button>
+        </div>
       </header>
 
       {loadError && <p className="notice notice-error">Could not refresh group: {loadError}</p>}

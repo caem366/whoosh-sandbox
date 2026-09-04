@@ -82,6 +82,10 @@ export interface SandboxTransactionResponse {
   idempotent: boolean
 }
 
+export interface SandboxSessionResponse {
+  groupId: string
+}
+
 export type SettlementSimulation =
   | 'success'
   | 'forced_failure'
@@ -97,7 +101,10 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(path, options)
+  // Empty in the Vercel all-in-one deployment, so API calls stay same-origin.
+  // Set VITE_API_URL only when deliberately deploying the API separately.
+  const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? ''
+  const response = await fetch(`${apiBaseUrl}${path}`, options)
   const text = await response.text()
   const payload: unknown = text.length > 0 ? JSON.parse(text) : null
 
@@ -114,6 +121,12 @@ async function request<T>(
   }
 
   return payload as T
+}
+
+export function createSandboxSession(): Promise<SandboxSessionResponse> {
+  return request<SandboxSessionResponse>('/api/sandbox/sessions', {
+    method: 'POST',
+  })
 }
 
 export function getGroup(groupId: string): Promise<GroupDetail> {

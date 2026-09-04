@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 
 import { createSandboxTransaction } from './transactions.service.js'
+import { createSandboxSession } from './sandbox-session.service.js'
 
 const createSandboxTransactionSchema = z.object({
   groupId: z.string().uuid(),
@@ -13,6 +14,16 @@ const createSandboxTransactionSchema = z.object({
 })
 
 export const sandboxRouter = Router()
+
+// A new session is intentionally a new group, preventing public visitors from
+// changing each other's demonstration balances or settlement queue.
+sandboxRouter.post('/sessions', async (_request, response, next) => {
+  try {
+    response.status(201).json(await createSandboxSession())
+  } catch (error) {
+    next(error)
+  }
+})
 
 sandboxRouter.post('/transactions', async (request, response, next) => {
   try {

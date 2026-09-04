@@ -11,7 +11,8 @@
     "dev:api": "npm run dev --workspace=@whoosh/api",
     "dev:web": "npm run dev --workspace=@whoosh/web",
     "build": "npm run build --workspace=@whoosh/shared && npm run build --workspace=@whoosh/api && npm run build --workspace=@whoosh/web",
-    "typecheck": "npm run typecheck --workspace=@whoosh/shared && npm run typecheck --workspace=@whoosh/api && npm run typecheck --workspace=@whoosh/web"
+    "typecheck": "npm run typecheck --workspace=@whoosh/shared && npm run typecheck --workspace=@whoosh/api && npm run typecheck --workspace=@whoosh/web",
+    "db:migrate": "npm run db:migrate --workspace=@whoosh/api"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
