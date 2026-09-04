@@ -1,0 +1,23 @@
+{
+  "name": "whoosh",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently --names api,web --prefix-colors blue,magenta \"npm run dev --workspace=@whoosh/api\" \"npm run dev --workspace=@whoosh/web\"",
+    "dev:api": "npm run dev --workspace=@whoosh/api",
+    "dev:web": "npm run dev --workspace=@whoosh/web",
+    "build": "npm run build --workspace=@whoosh/shared && npm run build --workspace=@whoosh/api && npm run build --workspace=@whoosh/web",
+    "typecheck": "npm run typecheck --workspace=@whoosh/shared && npm run typecheck --workspace=@whoosh/api && npm run typecheck --workspace=@whoosh/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "~6.0.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
