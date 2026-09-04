@@ -19,8 +19,10 @@ fit because it provides serverless Postgres.
 2. Import this GitHub repository into Vercel. Leave the project root as the
    repository root; Vercel reads `vercel.json` for the build and output settings.
 3. In Vercel → Settings → Environment Variables, add `DATABASE_URL` with the
-   Neon connection string. `PORT` and `VITE_API_URL` are not needed for this
-   all-in-one deployment.
+   pooled Neon connection string and `DATABASE_URL_UNPOOLED` with the direct
+   Neon connection string. The app uses the pooled URL; the build uses the
+   direct URL for Drizzle migrations. `PORT` and `VITE_API_URL` are not needed
+   for this all-in-one deployment.
 4. Deploy. The build runs the committed Drizzle migrations before the frontend
    build. Open `/api/health` after deployment to confirm the function is live.
    Then add `CORS_ORIGIN` with the final Vercel URL (for example,
