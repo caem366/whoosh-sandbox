@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "DATABASE_URL=$DATABASE_URL_UNPOOLED npm run db:migrate && npm run build",
-  "outputDirectory": "apps/web/dist"
+  "outputDirectory": "apps/web/dist",
+  "functions": {
+    "api/[...path].js": {
+      "includeFiles": "api/app.cjs"
+    }
+  }
 }
