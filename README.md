@@ -10,7 +10,7 @@
 
 <br />
 
-<img src="docs/images/whoosh-sandbox.png" alt="WHOOSH sandbox interface" width="900" />
+<img src="docs/images/whoosh-sandbox-demo.png" alt="WHOOSH sandbox interface" width="900" />
 
 </div>
 
