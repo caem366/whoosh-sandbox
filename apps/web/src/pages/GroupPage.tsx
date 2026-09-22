@@ -97,14 +97,26 @@ export function GroupPage() {
   useEffect(() => {
     let cancelled = false
 
-    const savedGroupId = localStorage.getItem(SANDBOX_GROUP_STORAGE_KEY)
-    const load = savedGroupId ? getGroup(savedGroupId) : createSandboxSession().then(async (session) => {
+    async function loadSandboxGroup() {
+      const savedGroupId = localStorage.getItem(SANDBOX_GROUP_STORAGE_KEY)
+
+      if (savedGroupId) {
+        try {
+          return await getGroup(savedGroupId)
+        } catch {
+          // A local database reset or expired demo group should not leave the
+          // sandbox unusable. Replace only the stale browser-local session.
+          localStorage.removeItem(SANDBOX_GROUP_STORAGE_KEY)
+        }
+      }
+
+      const session = await createSandboxSession()
       localStorage.setItem(SANDBOX_GROUP_STORAGE_KEY, session.groupId)
       setGroupId(session.groupId)
       return getGroup(session.groupId)
-    })
+    }
 
-    void load.then((group) => {
+    void loadSandboxGroup().then((group) => {
       if (cancelled) return
       setData(group)
       setGroupId(group.group.id)
