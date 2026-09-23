@@ -16,6 +16,39 @@ import {
   users,
 } from '../../db/schema/index.js'
 
+export function buildMemberAccountRows(groupId: string, groupMemberId: string) {
+  return [
+    {
+      groupId,
+      groupMemberId,
+      type: 'member_wallet' as const,
+      normalBalance: 'debit' as const,
+      currency: 'CAD',
+    },
+    {
+      groupId,
+      groupMemberId,
+      type: 'member_expense' as const,
+      normalBalance: 'debit' as const,
+      currency: 'CAD',
+    },
+    {
+      groupId,
+      groupMemberId,
+      type: 'member_payable' as const,
+      normalBalance: 'credit' as const,
+      currency: 'CAD',
+    },
+    {
+      groupId,
+      groupMemberId,
+      type: 'member_receivable' as const,
+      normalBalance: 'debit' as const,
+      currency: 'CAD',
+    },
+  ]
+}
+
 export interface CreateGroupInput {
     name: string
     creatorName: string
@@ -72,36 +105,7 @@ return db.transaction(async (transaction) => {
 
    const memberAccounts = await transaction
   .insert(ledgerAccounts)
-  .values([
-    {
-      groupId: group.id,
-      groupMemberId: member.id,
-      type: 'member_wallet',
-      normalBalance: 'debit',
-      currency: 'CAD',
-    },
-    {
-      groupId: group.id,
-      groupMemberId: member.id,
-      type: 'member_expense',
-      normalBalance: 'debit',
-      currency: 'CAD',
-    },
-    {
-      groupId: group.id,
-      groupMemberId: member.id,
-      type: 'member_payable',
-      normalBalance: 'credit',
-      currency: 'CAD',
-    },
-    {
-      groupId: group.id,
-      groupMemberId: member.id,
-      type: 'member_receivable',
-      normalBalance: 'debit',
-      currency: 'CAD',
-    },
-  ])
+  .values(buildMemberAccountRows(group.id, member.id))
   .returning()
 
 const [fundingAccount] = await transaction
@@ -175,36 +179,7 @@ export async function addGroupMember(input: AddGroupMemberInput) {
 
     const accounts = await transaction
       .insert(ledgerAccounts)
-      .values([
-        {
-          groupId: group.id,
-          groupMemberId: member.id,
-          type: 'member_wallet',
-          normalBalance: 'debit',
-          currency: 'CAD',
-        },
-        {
-          groupId: group.id,
-          groupMemberId: member.id,
-          type: 'member_expense',
-          normalBalance: 'debit',
-          currency: 'CAD',
-        },
-        {
-          groupId: group.id,
-          groupMemberId: member.id,
-          type: 'member_payable',
-          normalBalance: 'credit',
-          currency: 'CAD',
-        },
-        {
-          groupId: group.id,
-          groupMemberId: member.id,
-          type: 'member_receivable',
-          normalBalance: 'debit',
-          currency: 'CAD',
-        },
-      ])
+      .values(buildMemberAccountRows(group.id, member.id))
       .returning()
 
     return { user, member, accounts }
@@ -239,7 +214,6 @@ export async function fundMemberWallet(input: FundMemberWalletInput) {
       id: ledgerAccounts.id,
       groupMemberId: ledgerAccounts.groupMemberId,
       type: ledgerAccounts.type,
-      currency: ledgerAccounts.currency,
     })
     .from(ledgerAccounts)
     .where(eq(ledgerAccounts.groupId, input.groupId))
