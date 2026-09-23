@@ -27,6 +27,7 @@ import {
 import type {
   AllocationPlan,
   CreateSandboxTransactionInput,
+  SettlementPlan,
 } from './transactions.types.js'
 
 export function buildEqualAllocationPlan(
@@ -51,6 +52,19 @@ export function buildEqualAllocationPlan(
     responsibleMemberId: memberId,
     amountCents: amounts[index]!,
   }))
+}
+
+export function buildSettlementPlan(
+  payerMemberId: string,
+  allocations: AllocationPlan[],
+): SettlementPlan[] {
+  return allocations
+    .filter((allocation) => allocation.responsibleMemberId !== payerMemberId)
+    .map((allocation) => ({
+      debtorMemberId: allocation.responsibleMemberId,
+      creditorMemberId: payerMemberId,
+      amountCents: allocation.amountCents,
+    }))
 }
 
 export async function getPostedWalletBalance(
@@ -200,16 +214,10 @@ export async function createTransactionRecordsInTransaction(
     )
     .returning()
 
-  const settlementPlan = allocationPlan
-    .filter(
-      (allocation) =>
-        allocation.responsibleMemberId !== input.payerMemberId,
-    )
-    .map((allocation) => ({
-      debtorMemberId: allocation.responsibleMemberId,
-      creditorMemberId: input.payerMemberId,
-      amountCents: allocation.amountCents,
-    }))
+  const settlementPlan = buildSettlementPlan(
+    input.payerMemberId,
+    allocationPlan,
+  )
 
   const settlementRows =
     settlementPlan.length === 0

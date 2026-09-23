@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildEqualAllocationPlan } from './transactions.service.js'
+import {
+  buildEqualAllocationPlan,
+  buildSettlementPlan,
+} from './transactions.service.js'
 
 describe('transaction allocation planner', () => {
   it('splits $200 equally across four members', () => {
@@ -34,5 +37,28 @@ describe('transaction allocation planner', () => {
     expect(() =>
       buildEqualAllocationPlan(20_000, ['caelan', 'maya', 'maya']),
     ).toThrow('A participant can only appear once')
+  })
+})
+
+describe('transaction settlement planner', () => {
+  it('creates obligations for participants other than the payer', () => {
+    expect(
+      buildSettlementPlan('caelan', [
+        { responsibleMemberId: 'caelan', amountCents: 5_000 },
+        { responsibleMemberId: 'maya', amountCents: 5_000 },
+        { responsibleMemberId: 'sarah', amountCents: 5_000 },
+      ]),
+    ).toEqual([
+      {
+        debtorMemberId: 'maya',
+        creditorMemberId: 'caelan',
+        amountCents: 5_000,
+      },
+      {
+        debtorMemberId: 'sarah',
+        creditorMemberId: 'caelan',
+        amountCents: 5_000,
+      },
+    ])
   })
 })
