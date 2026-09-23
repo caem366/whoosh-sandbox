@@ -15,7 +15,22 @@ import {
   postJournalInTransaction,
   type DatabaseTransaction,
 } from '../ledger/ledger.service.js'
-import type { ProcessSettlementInput } from './settlements.types.js'
+import type {
+  ProcessSettlementInput,
+  SettlementSimulation,
+} from './settlements.types.js'
+
+export function getSimulationFailureReason(
+  simulation: SettlementSimulation,
+): string | undefined {
+  if (simulation === 'forced_failure') {
+    return 'Sandbox forced settlement failure'
+  }
+
+  if (simulation === 'insufficient_funds') {
+    return 'Sandbox simulated insufficient funds'
+  }
+}
 
 async function getPostedBalanceInTransaction(
   transaction: DatabaseTransaction,
@@ -56,16 +71,16 @@ export async function processSettlement(input: ProcessSettlementInput) {
 
   return db.transaction(async (transaction) => {
     const [foundSettlement] = await transaction
-  .select()
-  .from(settlements)
-  .where(eq(settlements.id, input.settlementId))
-  .limit(1)
+      .select()
+      .from(settlements)
+      .where(eq(settlements.id, input.settlementId))
+      .limit(1)
 
-if (!foundSettlement) {
-  throw new TypeError('Settlement not found')
-}
+    if (!foundSettlement) {
+      throw new TypeError('Settlement not found')
+    }
 
-const settlement = foundSettlement
+    const settlement = foundSettlement
 
     if (settlement.status !== 'pending' && settlement.status !== 'failed') {
       throw new TypeError(
@@ -109,12 +124,10 @@ const settlement = foundSettlement
       }
     }
 
-    if (simulation === 'forced_failure') {
-      return markFailed('Sandbox forced settlement failure')
-    }
+    const simulationFailureReason = getSimulationFailureReason(simulation)
 
-    if (simulation === 'insufficient_funds') {
-      return markFailed('Sandbox simulated insufficient funds')
+    if (simulationFailureReason) {
+      return markFailed(simulationFailureReason)
     }
 
     await transaction
