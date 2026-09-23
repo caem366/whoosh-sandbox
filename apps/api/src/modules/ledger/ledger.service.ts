@@ -38,7 +38,6 @@ export async function postJournalInTransaction(
   const accounts = await transaction
     .select({
       id: ledgerAccounts.id,
-      currency: ledgerAccounts.currency,
     })
     .from(ledgerAccounts)
     .where(

@@ -12,12 +12,6 @@ export interface LedgerEntryInput {
 export interface CreateJournalInput {
   groupId: string
   description: string
-  entries: LedgerEntryInput[]
-}
-
-export interface CreateJournalInput {
-  groupId: string
-  description: string
   idempotencyKey?: string
   entries: LedgerEntryInput[]
 }
